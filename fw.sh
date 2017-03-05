@@ -374,6 +374,9 @@ $IPT6 -t filter -A bad-good-6 -p icmpv6 -m state --state ESTABLISHED,RELATED -j 
 $IPT6 -t filter -A bad-good-6 -p icmpv6 -m limit --limit 600/min -j ACCEPT
 $IPT6 -t filter -A bad-good-6 -p icmpv6 -j DROP
 
+# allow proto 59 with limit of 40 bytes
+$IPT6 -t filter -A bad-good-6 -p ipv6-nonxt -m length --length 40 -j ACCEPT
+
 # log and reject all other
 $IPT6 -t filter -A bad-good-6 -m limit --limit 3/min --limit-burst 3 -j LOG --log-prefix "BAD-GOOD-6: "
 $IPT6 -t filter -A bad-good-6 -j REJECT
