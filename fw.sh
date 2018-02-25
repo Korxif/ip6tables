@@ -1,5 +1,11 @@
 #!/bin/bash
 
+#####
+# ipv6 ip6tables firewall learning script with comments
+# assume, that we have linux router with 2 NICs, enp1s0f0 & enp1s0f1 and 
+# WaveLan interface (WiFi) that bridged into br0
+####
+
 #################################################################################
 #
 # 1. Configuration options
@@ -127,12 +133,9 @@ $IPT6 -t filter -A bad-ifi6 -p udp -m state --state ESTABLISHED -j ACCEPT
 $IPT6 -t filter -A bad-ifi6 -p icmpv6 -m state --state ESTABLISHED,RELATED -j ACCEPT
 
 # allow icmp
-# neighbour solicitation
-$IPT6 -t filter -A bad-ifi6 -p icmpv6 -m icmp6 --icmpv6-type 135/0 -j ACCEPT
-# neighbour advertisement
-$IPT6 -t filter -A bad-ifi6 -p icmpv6 -m icmp6 --icmpv6-type 136/0 -j ACCEPT
-# v2 multicast listener report
-$IPT6 -t filter -A bad-ifi6 -p icmpv6 -m icmp6 --icmpv6-type 143/0 -j ACCEPT
+$IPT6 -t filter -A bad-ifi6 -p icmpv6 -m icmp6 --icmpv6-type 135/0 -j ACCEPT # neighbour solicitation
+$IPT6 -t filter -A bad-ifi6 -p icmpv6 -m icmp6 --icmpv6-type 136/0 -j ACCEPT # neighbour advertisement
+$IPT6 -t filter -A bad-ifi6 -p icmpv6 -m icmp6 --icmpv6-type 143/0 -j ACCEPT # v2 multicast listener report
 
 # allow any ll traffic from defaul gw
 #$IPT6 -t filter -A bad-ifi6 -p all -s fe80::xxxx:xxxx:xxxx:xxxx/64 -j ACCEPT
@@ -140,7 +143,7 @@ $IPT6 -t filter -A bad-ifi6 -p icmpv6 -m icmp6 --icmpv6-type 143/0 -j ACCEPT
 # multicast ping requests accepted from WAN iface
 $IPT6 -t filter -A bad-ifi6 -d ff02::1 -p icmpv6 -m icmp6 --icmpv6-type 128/0 -j ACCEPT
 $IPT6 -t filter -A bad-ifi6 -d ff02::2 -p icmpv6 -m icmp6 --icmpv6-type 128/0 -j ACCEPT
-# allow to receive pongs (it does not work via conntrack?)
+# allow to receive pongs (does it work via conntrack?)
 $IPT6 -t filter -A bad-ifi6 -p icmpv6 -m icmp6 --icmpv6-type 129/0 -j ACCEPT
 # allow multicast listener query from gw
 $IPT6 -t filter -A bad-ifi6 -p icmpv6 -m icmp6 --icmpv6-type 130/0 -j ACCEPT
@@ -211,14 +214,14 @@ $IPT6 -t filter -A good-ifi6 -p udp --dport 138 -m state --state NEW -j ACCEPT
 $IPT6 -t filter -A good-ifi6 -p tcp --dport 135 --syn -j ACCEPT
 
 # allow icmp
-$IPT6 -t filter -A good-ifi6 -p icmpv6 -m icmp6 --icmpv6-type 1/4 -j ACCEPT #port unreachanle
-$IPT6 -t filter -A good-ifi6 -p icmpv6 -m icmp6 --icmpv6-type 128/0 -j ACCEPT # ping
-$IPT6 -t filter -A good-ifi6 -p icmpv6 -m icmp6 --icmpv6-type 129/0 -j ACCEPT # pong
-$IPT6 -t filter -A good-ifi6 -p icmpv6 -m icmp6 --icmpv6-type 132/0 -j ACCEPT
-$IPT6 -t filter -A good-ifi6 -p icmpv6 -m icmp6 --icmpv6-type 133/0 -j ACCEPT
-$IPT6 -t filter -A good-ifi6 -p icmpv6 -m icmp6 --icmpv6-type 134/0 -j ACCEPT
-$IPT6 -t filter -A good-ifi6 -p icmpv6 -m icmp6 --icmpv6-type 135/0 -j ACCEPT
-$IPT6 -t filter -A good-ifi6 -p icmpv6 -m icmp6 --icmpv6-type 136/0 -j ACCEPT
+$IPT6 -t filter -A good-ifi6 -p icmpv6 -m icmp6 --icmpv6-type 1/4 -j ACCEPT # port unreachable
+$IPT6 -t filter -A good-ifi6 -p icmpv6 -m icmp6 --icmpv6-type 128/0 -j ACCEPT # ping (echo request)
+$IPT6 -t filter -A good-ifi6 -p icmpv6 -m icmp6 --icmpv6-type 129/0 -j ACCEPT # pong (echo reply)
+$IPT6 -t filter -A good-ifi6 -p icmpv6 -m icmp6 --icmpv6-type 132/0 -j ACCEPT # Multicast Listener done
+$IPT6 -t filter -A good-ifi6 -p icmpv6 -m icmp6 --icmpv6-type 133/0 -j ACCEPT # Router Solicitation
+$IPT6 -t filter -A good-ifi6 -p icmpv6 -m icmp6 --icmpv6-type 134/0 -j ACCEPT # Router Advertisement
+$IPT6 -t filter -A good-ifi6 -p icmpv6 -m icmp6 --icmpv6-type 135/0 -j ACCEPT # Neighbour Solicitation
+$IPT6 -t filter -A good-ifi6 -p icmpv6 -m icmp6 --icmpv6-type 136/0 -j ACCEPT # Neighbour Advertisement
 
 # allow (m)DNS
 $IPT6 -t filter -A good-ifi6 -p udp --dport 53 -j ACCEPT
@@ -377,7 +380,7 @@ $IPT6 -t filter -A bad-good-6 -p icmpv6 -j DROP
 # allow proto 59 with limit of 40 bytes
 $IPT6 -t filter -A bad-good-6 -p ipv6-nonxt -m length --length 40 -j ACCEPT
 
-# log and reject all other
+# log with limit and reject all other
 $IPT6 -t filter -A bad-good-6 -m limit --limit 3/min --limit-burst 3 -j LOG --log-prefix "BAD-GOOD-6: "
 $IPT6 -t filter -A bad-good-6 -j REJECT
 
