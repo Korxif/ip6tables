@@ -18,8 +18,8 @@ EXT_IFACE="enp1s0f0"
 LAN_IFACE="enp1s0f1"
 WLAN_IFACE="br0"
 
-LAN_IP6=`ip a ls $LAN_IFACE | grep inet6 | grep link | awk {'print $2'}`
-LAN_IP6_GLOB=`ip a ls $LAN_IFACE | grep inet6 | grep global | awk {'print $2'}`
+LAN_IP6=$(ip a ls $LAN_IFACE | grep inet6 | grep link | awk {'print $2'})
+LAN_IP6_GLOB=$(ip a ls $LAN_IFACE | grep inet6 | grep global | awk {'print $2'})
 
 #
 # 1.4 Localhost Configuration
